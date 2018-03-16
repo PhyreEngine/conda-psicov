@@ -1,0 +1,39 @@
+{% set version = load_file_regex(
+    load_file="psicov2.c",
+    regex_pattern='(?m)^/\*\s*Version (\S+)',
+    from_recipe_dir=False).group(1) %}
+
+package:
+  name: psicov
+  version: {{ version }}
+
+source:
+  url: http://bioinfadmin.cs.ucl.ac.uk/downloads/PSICOV/psicov2.c
+  sha256: bfb47c6e1e283c627f5468230dd0ce195426b384a7b989439639956ea7e54307
+
+build:
+  string: {{ architecture }}_{{ environ.get("BUILD_NUMBER", 0) }}
+  features:
+  - arch_{{ architecture }}
+  script: |
+    set -x
+    $CC $CPPFLAGS $CFLAGS \
+        -O3 -march={{ architecture }} \
+        -ffast-math -m64 -ftree-vectorize \
+        -fopenmp psicov2.c -lm \
+        -o psicov \
+        $LDFLAGS
+    install -d -m755 "${PREFIX}/bin"
+    install -m755 psicov "${PREFIX}/bin"
+
+requirements:
+  run:
+  - openmp
+  host:
+  - openmp
+  build:
+  - {{ compiler('c') }}
+
+about:
+  home: http://bioinfadmin.cs.ucl.ac.uk/downloads/PSICOV/
+  license: GPL2
